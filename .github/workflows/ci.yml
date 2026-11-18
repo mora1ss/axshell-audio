@@ -44,7 +44,7 @@ jobs:
 
       - name: Check the binary runs
         run: |
-          ./serpantinum-audio version
+          ./axshell-audio version
           rc=0
-          ./serpantinum-audio >/dev/null 2>&1 || rc=$?
+          ./axshell-audio >/dev/null 2>&1 || rc=$?
           test "$rc" -eq 64

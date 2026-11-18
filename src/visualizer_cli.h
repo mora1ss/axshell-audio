@@ -12,7 +12,7 @@
 namespace sa {
 
 constexpr const char* kVisualizerUsage =
-    "usage: serpantinum-audio visualizer [options]\n"
+    "usage: axshell-audio visualizer [options]\n"
     "\n"
     "Captures the default output and prints one frame per line, a JSON array of bar heights from 0 to 1.\n"
     "A frame equal to the previous one is not printed, so silence ends with a single frame of zeros.\n"

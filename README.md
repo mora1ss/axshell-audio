@@ -1,8 +1,8 @@
-# serpantinum-audio
+# axshell-audio
 
-A small PipeWire audio processor for the [Serpantinum](https://github.com/ilyamiro/serpantinum) shell. It replaces EasyEffects and depends only on PipeWire.
+A small PipeWire audio processor for the [AxShell](https://github.com/mora1ss/axshell) shell. It replaces EasyEffects and depends only on PipeWire.
 
-It creates a virtual output called **Serpantinum** (`serpantinum_sink`), processes everything sent to it and plays the result on your real output device. The shell talks to it over a local socket, so changing a setting is instant.
+It creates a virtual output called **AxShell** (`axshell_sink`), processes everything sent to it and plays the result on your real output device. The shell talks to it over a local socket, so changing a setting is instant.
 
 ## Features
 
@@ -13,7 +13,7 @@ It creates a virtual output called **Serpantinum** (`serpantinum_sink`), process
 - Global bypass
 - A spectrum visualizer for the shell, a port of [cava](https://github.com/karlstav/cava)
 
-The daemon leaves your default output alone. Like EasyEffects, it moves each app's playback stream onto its sink and plays the processed result on whatever the default output is, so choosing another output moves the processed audio there. When the output device disappears, the daemon waits for the session manager to pick the next default instead of guessing, and if Serpantinum itself is selected as the default it plays on the highest-priority real output. A stream that names another device, or one you move to another device yourself, is left where it is. When the daemon stops, apps go back to the default output.
+The daemon leaves your default output alone. Like EasyEffects, it moves each app's playback stream onto its sink and plays the processed result on whatever the default output is, so choosing another output moves the processed audio there. When the output device disappears, the daemon waits for the session manager to pick the next default instead of guessing, and if AxShell itself is selected as the default it plays on the highest-priority real output. A stream that names another device, or one you move to another device yourself, is left where it is. When the daemon stops, apps go back to the default output.
 
 ### Voice chat apps
 
@@ -30,18 +30,18 @@ The daemon skips a playback stream when its `application.name` or `application.p
 
 It also skips any stream whose `media.role` is `Communication` or `phone`, which apps set on call audio.
 
-Every stream from these apps is skipped, including music or video played in them. The decision is made once, when the stream appears, so a stream never moves while it plays. To process one anyway, move it to **Serpantinum** yourself, for example in pavucontrol.
+Every stream from these apps is skipped, including music or video played in them. The decision is made once, when the stream appears, so a stream never moves while it plays. To process one anyway, move it to **AxShell** yourself, for example in pavucontrol.
 
 Telegram calls and calls in a browser are still processed. Their call audio cannot be told apart from their other playback.
 
 ## Usage
 
 ```
-serpantinum-audio daemon          run in the foreground
-serpantinum-audio start           start in the background unless already running, wait until it answers
-serpantinum-audio ctl <command>   send one command and print the reply
-serpantinum-audio visualizer      print spectrum frames, see below
-serpantinum-audio version         print the version
+axshell-audio daemon          run in the foreground
+axshell-audio start           start in the background unless already running, wait until it answers
+axshell-audio ctl <command>   send one command and print the reply
+axshell-audio visualizer      print spectrum frames, see below
+axshell-audio version         print the version
 ```
 
 Without arguments it prints the usage and exits with status 64.
@@ -64,21 +64,21 @@ Without arguments it prints the usage and exits with status 64.
 Every change replies `ok` or `error`. Example:
 
 ```bash
-serpantinum-audio ctl set 2 1 0 0 0 0 0 1 2 3 0 0 0 off 0 1
+axshell-audio ctl set 2 1 0 0 0 0 0 1 2 3 0 0 0 off 0 1
 ```
 
 ### Files
 
 | Path | Content |
 | --- | --- |
-| `$XDG_RUNTIME_DIR/serpantinum-audio.sock` | control socket |
-| `$XDG_STATE_HOME/serpantinum/audio.state` | last settings, restored on start |
-| `$XDG_STATE_HOME/serpantinum/audio.log` | log of the background daemon |
-| `$XDG_RUNTIME_DIR/serpantinum/audio-target` | name and PipeWire id of the real output device |
+| `$XDG_RUNTIME_DIR/axshell-audio.sock` | control socket |
+| `$XDG_STATE_HOME/axshell/audio.state` | last settings, restored on start |
+| `$XDG_STATE_HOME/axshell/audio.log` | log of the background daemon |
+| `$XDG_RUNTIME_DIR/axshell/audio-target` | name and PipeWire id of the real output device |
 
 ## Visualizer
 
-`serpantinum-audio visualizer` captures the default output and prints the spectrum as one JSON array of bar heights from 0 to 1 per line:
+`axshell-audio visualizer` captures the default output and prints the spectrum as one JSON array of bar heights from 0 to 1 per line:
 
 ```
 [0.12,0.31,0.86,1,0.44,0]
@@ -104,7 +104,7 @@ The processing is a port of cava 1.0.0: two Hann-windowed FFTs (8192 points belo
 | `--source NAME` | auto | `source`: `auto` (default output), `auto_input`, a node name or `<sink>.monitor` |
 | `--sample-rate N` | 48000 | `sample_rate` |
 
-`serpantinum-audio visualizer --help` lists them. Invalid options exit with status 64, and a lost PipeWire connection with status 1.
+`axshell-audio visualizer --help` lists them. Invalid options exit with status 64, and a lost PipeWire connection with status 1.
 
 ## Dynamic EQ
 
@@ -162,15 +162,15 @@ ffmpeg -i track.mp3 -f f32le -ac 2 -ar 48000 - | ./eval
 ### Nix
 
 ```nix
-environment.systemPackages = [ (import (builtins.fetchTarball "https://github.com/ilyamiro/serpantinum-audio/archive/master.tar.gz") { inherit pkgs; }) ];
+environment.systemPackages = [ (import (builtins.fetchTarball "https://github.com/mora1ss/axshell-audio/archive/master.tar.gz") { inherit pkgs; }) ];
 ```
 
-The Serpantinum flake already includes it.
+The AxShell flake already includes it.
 
 ## Releases
 
-Pushing a `v*` tag that matches `VERSION` builds `x86_64` and `aarch64` binaries on Ubuntu 24.04, so they run on any distribution with glibc 2.39 and PipeWire 0.3.49 or newer, and publishes them with a `SHA256SUMS` file. Each archive holds `usr/bin/serpantinum-audio` and the license.
+Pushing a `v*` tag that matches `VERSION` builds `x86_64` and `aarch64` binaries on Ubuntu 24.04, so they run on any distribution with glibc 2.39 and PipeWire 0.3.49 or newer, and publishes them with a `SHA256SUMS` file. Each archive holds `usr/bin/axshell-audio` and the license.
 
 ## License
 
-AGPL-3.0-only, like Serpantinum. The visualizer in `src/dsp/visualizer.h` is ported from cava, MIT, Copyright (c) 2022 Karl Stavestrand; the notice is kept in that file.
+AGPL-3.0-only, like AxShell. The visualizer in `src/dsp/visualizer.h` is ported from cava, MIT, Copyright (c) 2022 Karl Stavestrand; the notice is kept in that file.

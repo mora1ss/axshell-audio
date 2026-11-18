@@ -40,9 +40,9 @@ jobs:
 
       - name: Check the binary runs
         run: |
-          ./serpantinum-audio version
+          ./axshell-audio version
           rc=0
-          ./serpantinum-audio >/dev/null 2>&1 || rc=$?
+          ./axshell-audio >/dev/null 2>&1 || rc=$?
           test "$rc" -eq 64
 
       - name: Package
@@ -50,7 +50,7 @@ jobs:
           version=$(cat VERSION)
           make install DESTDIR="$PWD/stage" PREFIX=/usr
           mkdir -p dist
-          tar -C stage -czf "dist/serpantinum-audio-${version}-${{ matrix.arch }}-linux.tar.gz" usr
+          tar -C stage -czf "dist/axshell-audio-${version}-${{ matrix.arch }}-linux.tar.gz" usr
 
       - uses: actions/upload-artifact@v4
         with:

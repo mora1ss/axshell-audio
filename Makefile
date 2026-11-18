@@ -5,7 +5,7 @@ CXXFLAGS += -std=c++17 -Wall -Wextra
 VERSION := $(shell cat VERSION)
 PW_CFLAGS = $(shell $(PKG_CONFIG) --cflags libpipewire-0.3)
 PW_LIBS = $(shell $(PKG_CONFIG) --libs libpipewire-0.3)
-OUT ?= serpantinum-audio
+OUT ?= axshell-audio
 PREFIX ?= /usr/local
 DESTDIR ?=
 
@@ -28,12 +28,12 @@ eval: test/eval.cpp $(SOURCES)
 	$(CXX) $(CXXFLAGS) -o eval test/eval.cpp
 
 install: $(OUT)
-	install -Dm755 $(OUT) $(DESTDIR)$(PREFIX)/bin/serpantinum-audio
-	install -Dm644 LICENSE $(DESTDIR)$(PREFIX)/share/licenses/serpantinum-audio/LICENSE
+	install -Dm755 $(OUT) $(DESTDIR)$(PREFIX)/bin/axshell-audio
+	install -Dm644 LICENSE $(DESTDIR)$(PREFIX)/share/licenses/axshell-audio/LICENSE
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/serpantinum-audio
-	rm -rf $(DESTDIR)$(PREFIX)/share/licenses/serpantinum-audio
+	rm -f $(DESTDIR)$(PREFIX)/bin/axshell-audio
+	rm -rf $(DESTDIR)$(PREFIX)/share/licenses/axshell-audio
 
 clean:
 	rm -f $(OUT) eval $(addsuffix .bin,$(TESTS))

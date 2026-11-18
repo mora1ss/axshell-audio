@@ -34,8 +34,8 @@
 
 namespace {
 
-constexpr const char* kSinkName = "serpantinum_sink";
-constexpr const char* kOutputName = "serpantinum_output";
+constexpr const char* kSinkName = "axshell_sink";
+constexpr const char* kOutputName = "axshell_output";
 constexpr const char* kConfiguredKey = "default.configured.audio.sink";
 constexpr const char* kResolvedKey = "default.audio.sink";
 constexpr const char* kTargetObjectKey = "target.object";
@@ -53,13 +53,13 @@ std::string home() { return envOr("HOME", "/tmp"); }
 
 std::string socketPath() {
     const std::string runtime = envOr("XDG_RUNTIME_DIR", "");
-    if (!runtime.empty()) return runtime + "/serpantinum-audio.sock";
-    return "/tmp/serpantinum-audio-" + std::to_string(getuid()) + ".sock";
+    if (!runtime.empty()) return runtime + "/axshell-audio.sock";
+    return "/tmp/axshell-audio-" + std::to_string(getuid()) + ".sock";
 }
 
-std::string runtimeDir() { return envOr("XDG_RUNTIME_DIR", "/tmp") + "/serpantinum"; }
+std::string runtimeDir() { return envOr("XDG_RUNTIME_DIR", "/tmp") + "/axshell"; }
 
-std::string stateDir() { return envOr("XDG_STATE_HOME", home() + "/.local/state") + "/serpantinum"; }
+std::string stateDir() { return envOr("XDG_STATE_HOME", home() + "/.local/state") + "/axshell"; }
 
 void makeDirs(const std::string& path) {
     for (size_t i = 1; i <= path.size(); ++i) {
@@ -121,7 +121,7 @@ public:
     int run() {
         std::string reply;
         if (request("ping", reply)) {
-            std::fprintf(stderr, "serpantinum-audio: already running\n");
+            std::fprintf(stderr, "axshell-audio: already running\n");
             return 1;
         }
 
@@ -137,7 +137,7 @@ public:
         context_ = pw_context_new(loop, nullptr, 0);
         core_ = context_ ? pw_context_connect(context_, nullptr, 0) : nullptr;
         if (!core_) {
-            std::fprintf(stderr, "serpantinum-audio: cannot connect to PipeWire\n");
+            std::fprintf(stderr, "axshell-audio: cannot connect to PipeWire\n");
             return 1;
         }
         pw_core_add_listener(core_, &coreListener_, &coreEventsTable(), this);
@@ -185,7 +185,7 @@ private:
 
     static void onCoreError(void* data, uint32_t id, int, int res, const char* message) {
         if (id == PW_ID_CORE && res == -EPIPE) {
-            std::fprintf(stderr, "serpantinum-audio: PipeWire connection lost: %s\n", message);
+            std::fprintf(stderr, "axshell-audio: PipeWire connection lost: %s\n", message);
             pw_main_loop_quit(static_cast<Daemon*>(data)->loop_);
         }
     }
@@ -222,7 +222,7 @@ private:
         std::snprintf(addr.sun_path, sizeof addr.sun_path, "%s", path.c_str());
         if (listenFd_ < 0 || bind(listenFd_, reinterpret_cast<sockaddr*>(&addr), sizeof addr) != 0 ||
             listen(listenFd_, 8) != 0) {
-            std::fprintf(stderr, "serpantinum-audio: cannot bind %s\n", path.c_str());
+            std::fprintf(stderr, "axshell-audio: cannot bind %s\n", path.c_str());
             return false;
         }
         chmod(path.c_str(), 0600);
@@ -274,7 +274,7 @@ private:
 
     static void onStreamState(void* data, pw_stream_state, pw_stream_state state, const char* error) {
         (void)data;
-        if (state == PW_STREAM_STATE_ERROR) std::fprintf(stderr, "serpantinum-audio: stream error: %s\n", error);
+        if (state == PW_STREAM_STATE_ERROR) std::fprintf(stderr, "axshell-audio: stream error: %s\n", error);
     }
 
     void captureCycle() {
@@ -323,9 +323,9 @@ private:
 
     pw_properties* streamProps(const char* name, const char* description) {
         pw_properties* p = pw_properties_new(PW_KEY_NODE_NAME, name, PW_KEY_NODE_DESCRIPTION, description,
-                                             PW_KEY_NODE_GROUP, "serpantinum-audio", PW_KEY_NODE_LINK_GROUP,
-                                             "serpantinum-audio", PW_KEY_AUDIO_CHANNELS, "2", PW_KEY_AUDIO_RATE, "48000",
-                                             "audio.position", "[ FL FR ]", PW_KEY_APP_NAME, "Serpantinum audio",
+                                             PW_KEY_NODE_GROUP, "axshell-audio", PW_KEY_NODE_LINK_GROUP,
+                                             "axshell-audio", PW_KEY_AUDIO_CHANNELS, "2", PW_KEY_AUDIO_RATE, "48000",
+                                             "audio.position", "[ FL FR ]", PW_KEY_APP_NAME, "AxShell audio",
                                              nullptr);
         return p;
     }
@@ -347,30 +347,30 @@ private:
     }
 
     void createSink() {
-        pw_properties* props = streamProps(kSinkName, "Serpantinum");
+        pw_properties* props = streamProps(kSinkName, "AxShell");
         pw_properties_set(props, PW_KEY_MEDIA_CLASS, "Audio/Sink");
         pw_properties_set(props, PW_KEY_NODE_VIRTUAL, "true");
         pw_properties_set(props, PW_KEY_PRIORITY_SESSION, "0");
-        pw_properties_set(props, PW_KEY_MEDIA_NAME, "Serpantinum sink");
+        pw_properties_set(props, PW_KEY_MEDIA_NAME, "AxShell sink");
         sinkEvents_ = {};
         sinkEvents_.version = PW_VERSION_STREAM_EVENTS;
         sinkEvents_.process = onSinkProcess;
         sinkEvents_.state_changed = onStreamState;
         sink_ = pw_stream_new(core_, kSinkName, props);
         pw_stream_add_listener(sink_, &sinkListener_, &sinkEvents_, this);
-        if (!connectStream(sink_, PW_DIRECTION_INPUT)) std::fprintf(stderr, "serpantinum-audio: sink connect failed\n");
+        if (!connectStream(sink_, PW_DIRECTION_INPUT)) std::fprintf(stderr, "axshell-audio: sink connect failed\n");
     }
 
     void createOutput(const std::string& target) {
         destroyOutput();
         ring_.clear();
         primed_ = false;
-        pw_properties* props = streamProps(kOutputName, "Serpantinum output");
+        pw_properties* props = streamProps(kOutputName, "AxShell output");
         pw_properties_set(props, PW_KEY_MEDIA_CLASS, "Stream/Output/Audio");
         pw_properties_set(props, PW_KEY_MEDIA_TYPE, "Audio");
         pw_properties_set(props, PW_KEY_MEDIA_CATEGORY, "Playback");
         pw_properties_set(props, PW_KEY_MEDIA_ROLE, "Music");
-        pw_properties_set(props, PW_KEY_MEDIA_NAME, "Serpantinum output");
+        pw_properties_set(props, PW_KEY_MEDIA_NAME, "AxShell output");
         pw_properties_set(props, "target.object", target.c_str());
         pw_properties_set(props, "node.dont-reconnect", "true");
         pw_properties_set(props, "stream.dont-remix", "true");
@@ -380,7 +380,7 @@ private:
         outEvents_.state_changed = onStreamState;
         out_ = pw_stream_new(core_, kOutputName, props);
         pw_stream_add_listener(out_, &outListener_, &outEvents_, this);
-        if (!connectStream(out_, PW_DIRECTION_OUTPUT)) std::fprintf(stderr, "serpantinum-audio: output connect failed\n");
+        if (!connectStream(out_, PW_DIRECTION_OUTPUT)) std::fprintf(stderr, "axshell-audio: output connect failed\n");
         target_ = target;
         publishTarget();
     }
@@ -769,7 +769,7 @@ public:
     int run() {
         std::string error;
         if (!vis_.init(cfg_.options, error)) {
-            std::fprintf(stderr, "serpantinum-audio: %s\n", error.c_str());
+            std::fprintf(stderr, "axshell-audio: %s\n", error.c_str());
             return 64;
         }
         const sa::VisualizerOptions& o = vis_.options();
@@ -788,7 +788,7 @@ public:
         context_ = pw_context_new(loop, nullptr, 0);
         core_ = context_ ? pw_context_connect(context_, nullptr, 0) : nullptr;
         if (!core_) {
-            std::fprintf(stderr, "serpantinum-audio: cannot connect to PipeWire\n");
+            std::fprintf(stderr, "axshell-audio: cannot connect to PipeWire\n");
             return 1;
         }
         coreEvents_.version = PW_VERSION_CORE_EVENTS;
@@ -797,7 +797,7 @@ public:
 
         timer_ = pw_loop_add_timer(loop, onTimer, this);
         if (!connect()) {
-            std::fprintf(stderr, "serpantinum-audio: cannot connect the capture stream\n");
+            std::fprintf(stderr, "axshell-audio: cannot connect the capture stream\n");
             status_ = 1;
         } else {
             wake();
@@ -823,8 +823,8 @@ private:
         const sa::VisualizerOptions& o = vis_.options();
         pw_properties* props = pw_properties_new(
             PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Capture", PW_KEY_MEDIA_ROLE, "Music", PW_KEY_NODE_NAME,
-            "serpantinum_visualizer", PW_KEY_NODE_DESCRIPTION, "Serpantinum visualizer", PW_KEY_APP_NAME,
-            "Serpantinum visualizer", PW_KEY_APP_ID, "serpantinum", PW_KEY_NODE_PASSIVE, "true", PW_KEY_NODE_VIRTUAL,
+            "axshell_visualizer", PW_KEY_NODE_DESCRIPTION, "AxShell visualizer", PW_KEY_APP_NAME,
+            "AxShell visualizer", PW_KEY_APP_ID, "axshell", PW_KEY_NODE_PASSIVE, "true", PW_KEY_NODE_VIRTUAL,
             "true", PW_KEY_STREAM_DONT_REMIX, "false", "channelmix.upmix", "true", nullptr);
         std::string source = cfg_.source;
         const std::string monitor = ".monitor";
@@ -841,7 +841,7 @@ private:
         streamEvents_.version = PW_VERSION_STREAM_EVENTS;
         streamEvents_.process = onProcess;
         streamEvents_.state_changed = onState;
-        stream_ = pw_stream_new(core_, "serpantinum-visualizer", props);
+        stream_ = pw_stream_new(core_, "axshell-visualizer", props);
         if (!stream_) return false;
         pw_stream_add_listener(stream_, &streamListener_, &streamEvents_, this);
 
@@ -868,7 +868,7 @@ private:
 
     static void onCoreError(void* data, uint32_t id, int, int res, const char* message) {
         if (id != PW_ID_CORE || res != -EPIPE) return;
-        std::fprintf(stderr, "serpantinum-audio: PipeWire connection lost: %s\n", message);
+        std::fprintf(stderr, "axshell-audio: PipeWire connection lost: %s\n", message);
         static_cast<VisualizerStream*>(data)->quit(1);
     }
 
@@ -877,7 +877,7 @@ private:
         if (state == PW_STREAM_STATE_PAUSED) {
             self->resetInput();
         } else if (state == PW_STREAM_STATE_ERROR || state == PW_STREAM_STATE_UNCONNECTED) {
-            std::fprintf(stderr, "serpantinum-audio: capture stream %s%s%s\n",
+            std::fprintf(stderr, "axshell-audio: capture stream %s%s%s\n",
                          state == PW_STREAM_STATE_ERROR ? "error" : "disconnected", error ? ": " : "", error ? error : "");
             self->quit(1);
         }
@@ -1035,7 +1035,7 @@ int main(int argc, char** argv) {
     const std::string cmd = argc > 1 ? argv[1] : "";
 
     if (cmd == "version" || cmd == "--version") {
-        std::printf("serpantinum-audio %s\n", SA_VERSION);
+        std::printf("axshell-audio %s\n", SA_VERSION);
         return 0;
     }
 
@@ -1060,7 +1060,7 @@ int main(int argc, char** argv) {
         sa::VisualizerConfig cfg;
         std::string error;
         if (!sa::parseVisualizerArgs(args, cfg, error)) {
-            std::fprintf(stderr, "serpantinum-audio: %s\n%s", error.c_str(), sa::kVisualizerUsage);
+            std::fprintf(stderr, "axshell-audio: %s\n%s", error.c_str(), sa::kVisualizerUsage);
             return 64;
         }
         return VisualizerStream(cfg).run();
@@ -1071,13 +1071,13 @@ int main(int argc, char** argv) {
         for (int i = 2; i < argc; ++i) line += (i > 2 ? " " : "") + std::string(argv[i]);
         std::string reply;
         if (!request(line, reply)) {
-            std::fprintf(stderr, "serpantinum-audio: daemon is not running\n");
+            std::fprintf(stderr, "axshell-audio: daemon is not running\n");
             return 2;
         }
         std::printf("%s\n", reply.c_str());
         return reply.rfind("ok", 0) == 0 || reply.rfind("set", 0) == 0 ? 0 : 1;
     }
 
-    std::fprintf(stderr, "usage: serpantinum-audio daemon | start | ctl <command...> | visualizer [options] | version\n");
+    std::fprintf(stderr, "usage: axshell-audio daemon | start | ctl <command...> | visualizer [options] | version\n");
     return 64;
 }

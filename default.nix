@@ -4,7 +4,7 @@ let
   inherit (pkgs) lib;
 in
 pkgs.stdenv.mkDerivation {
-  pname = "serpantinum-audio";
+  pname = "axshell-audio";
   version = lib.strings.trim (builtins.readFile ./VERSION);
 
   src = lib.fileset.toSource {
@@ -28,10 +28,10 @@ pkgs.stdenv.mkDerivation {
   makeFlags = [ "PREFIX=$(out)" ];
 
   meta = {
-    description = "PipeWire audio processor for the Serpantinum shell";
-    homepage = "https://github.com/ilyamiro/serpantinum-audio";
+    description = "PipeWire audio processor for AxShell";
+    homepage = "https://github.com/mora1ss/axshell-audio";
     license = lib.licenses.agpl3Only;
-    mainProgram = "serpantinum-audio";
+    mainProgram = "axshell-audio";
     platforms = lib.platforms.linux;
   };
 }
